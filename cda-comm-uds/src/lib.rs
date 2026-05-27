@@ -3048,7 +3048,11 @@ fn sae_to_dtc_code(sae_dtc: &str) -> Result<DtcCode, DiagServiceError> {
         }
     };
 
-    let hex_part = &sae_dtc[2..];
+    let hex_part = sae_dtc.get(2..).ok_or_else(|| {
+        DiagServiceError::InvalidRequest(format!(
+            "Invalid SAE dtc code '{sae_dtc}', missing hex part"
+        ))
+    })?;
     let code = DtcCode::from_str_radix(hex_part, 16).map_err(|_| {
         DiagServiceError::InvalidRequest(format!(
             "Invalid hex characters in SAE dtc code '{sae_dtc}'"
