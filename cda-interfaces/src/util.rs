@@ -238,22 +238,20 @@ pub fn decode_hex(value: &str) -> Result<Vec<u8>, DiagServiceError> {
             "Non-hex character found".to_owned(),
         ));
     }
-    
+
     let value = if value.len().is_multiple_of(2) {
         value
     } else {
         // Odd length: pad the last character with a leading '0'
-        let first_part = value.get(..value.len().saturating_sub(1))
-            .ok_or_else(|| DiagServiceError::ParameterConversionError(
-                "Invalid hex string length".to_owned()
-            ))?;
-        let last_char = value.get(value.len().saturating_sub(1)..)
-            .ok_or_else(|| DiagServiceError::ParameterConversionError(
-                "Invalid hex string length".to_owned()
-            ))?;
-        &format!("{}0{}", first_part, last_char)
+        let first_part = value.get(..value.len().saturating_sub(1)).ok_or_else(|| {
+            DiagServiceError::ParameterConversionError("Invalid hex string length".to_owned())
+        })?;
+        let last_char = value.get(value.len().saturating_sub(1)..).ok_or_else(|| {
+            DiagServiceError::ParameterConversionError("Invalid hex string length".to_owned())
+        })?;
+        &format!("{first_part}0{last_char}")
     };
-    
+
     hex::decode(value).map_err(|e| {
         DiagServiceError::ParameterConversionError(format!("Invalid hex value, error={e}"))
     })
@@ -476,7 +474,7 @@ mod tests {
     fn test_decode_hex_even_length() {
         let result = decode_hex("0A3F").unwrap();
         assert_eq!(result, vec![0x0A, 0x3F]);
-        
+
         let result = decode_hex("ABCD").unwrap();
         assert_eq!(result, vec![0xAB, 0xCD]);
     }
@@ -487,7 +485,7 @@ mod tests {
         // "A3F" -> "A30F" -> [0xA3, 0x0F]
         let result = decode_hex("A3F").unwrap();
         assert_eq!(result, vec![0xA3, 0x0F]);
-        
+
         let result = decode_hex("F").unwrap();
         assert_eq!(result, vec![0x0F]);
     }
@@ -496,7 +494,7 @@ mod tests {
     fn test_decode_hex_case_insensitive() {
         let result = decode_hex("abcd").unwrap();
         assert_eq!(result, vec![0xAB, 0xCD]);
-        
+
         let result = decode_hex("AbCd").unwrap();
         assert_eq!(result, vec![0xAB, 0xCD]);
     }
@@ -519,7 +517,6 @@ mod tests {
     fn test_decode_hex_boundary_values() {
         let result = decode_hex("00").unwrap();
         assert_eq!(result, vec![0x00]);
-        
         let result = decode_hex("FF").unwrap();
         assert_eq!(result, vec![0xFF]);
     }
